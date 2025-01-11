@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  frontend:
+    container_name: frontend
+    build:
+      context: ./next
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./next/.env:/next/.env
+      - ./next/:/next/
+      - /next/node_modules
+      - /next/.next
+
+  platform:
+    container_name: platform
+    build:
+      context: ./platform
+      target: prod
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - ./platform:/app/src/
+    env_file:
+      - next/.env
+    environment:
+      Repo_Booster_HOST: 0.0.0.0
+      Repo_Booster_DB_HOST: Repo_Booster_db
+      Repo_Booster_DB_PORT: "3307"
+      Repo_Booster_DB_USER: "Repo_Booster"
+      Repo_Booster_DB_PASS: "Repo_Booster"
+      Repo_Booster_DB_BASE: "Repo_Booster"
+    depends_on:
+      - Repo_Booster_db
+
+  Repo_Booster_db:
+    image: mysql:8.0
+    container_name: Repo_Booster_db
+    restart: always
+    build:
+      context: ./db
+    ports:
+      - "3308:3307"
+    environment:
+      MYSQL_DATABASE: "Repo_Booster"
+      MYSQL_USER: "Repo_Booster"
+      MYSQL_PASSWORD: "Repo_Booster"
+      MYSQL_ROOT_PASSWORD: "Repo_Booster"
+      MYSQL_TCP_PORT: 3307
+    volumes:
+      - Repo_Booster_db:/var/lib/mysql
+    command: [ 'mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
+
+volumes:
+  Repo_Booster_db:
